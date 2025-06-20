@@ -242,10 +242,32 @@ async def handle_any_message(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def handle_any_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     await reset_timers(user_id, context)
-    await update.callback_query.answer()
+    if update.callback_query:
+        await update.callback_query.answer()
+
+from flask import Flask
+from threading import Thread
+
+# Flask app para health check
+flask_app = Flask('')
+
+@flask_app.route('/')
+def home():
+    return "✅ Bot CFLIX está rodando!"
+
+@flask_app.route('/health')
+def health():
+    return {"status": "ok", "bot": "running"}
+
+def manter_online():
+    flask_app.run(host='0.0.0.0', port=8080)
 
 # MAIN
 if __name__ == '__main__':
+    # Inicia o servidor Flask em thread separada
+    Thread(target=manter_online, daemon=True).start()
+
+    # Configura o bot
     app = ApplicationBuilder().token("7719732942:AAFlrJ3lOCHpASjI6eOprPe2XvNtTR6D2gw").build()
 
     app.add_handler(CommandHandler("start", start))
@@ -260,4 +282,5 @@ if __name__ == '__main__':
     app.add_handler(CallbackQueryHandler(handle_any_callback))
 
     print("🤖 Bot CFLIX rodando...")
+    print("🌐 Servidor web rodando na porta 8080")
     app.run_polling()
